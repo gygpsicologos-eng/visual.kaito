@@ -67,10 +67,9 @@ percentile depths (Tukey's letter values), for large samples.
 }
 
 This base-graphics version draws three 2D projections rather than a
-single rotatable 3D scene; an interactive rotatable version (with the
-same four conventions, a notch option, a same-scale/z-score option,
-and axis-pair view switching) exists as a prototype and is planned for
-a future release of this package.
+single rotatable 3D scene. For a true interactive rotatable 3D view
+(same four conventions, a same-scale/z-score option, and axis-pair
+view buttons), see \code{\link[=boxplot3d_interactive]{boxplot3d_interactive()}}.
 }
 \examples{
 set.seed(1)

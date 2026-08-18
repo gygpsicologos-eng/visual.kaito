@@ -19,10 +19,9 @@
 #' }
 #'
 #' This base-graphics version draws three 2D projections rather than a
-#' single rotatable 3D scene; an interactive rotatable version (with the
-#' same four conventions, a notch option, a same-scale/z-score option,
-#' and axis-pair view switching) exists as a prototype and is planned for
-#' a future release of this package.
+#' single rotatable 3D scene. For a true interactive rotatable 3D view
+#' (same four conventions, a same-scale/z-score option, and axis-pair
+#' view buttons), see [boxplot3d_interactive()].
 #'
 #' @param data A data frame with the three axes and the grouping variable.
 #' @param x,y,z Character. Column names of the three continuous axes.
