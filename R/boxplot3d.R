@@ -64,7 +64,7 @@ boxplot3d <- function(data, x = "x", y = "y", z = "z", group = "group",
   groups <- levels(g)
   if (is.null(col)) col <- grDevices::palette.colors(max(3, length(groups)), palette = "Okabe-Ito")
 
-  axes <- list(x = data[[x]], y = data[[y]], z = data[[z]])
+  axes <- list(x = .as_plain_numeric(data[[x]]), y = .as_plain_numeric(data[[y]]), z = .as_plain_numeric(data[[z]]))
   stats_by_group <- stats::setNames(lapply(groups, function(gr) {
     idx <- g == gr
     lapply(axes, function(v) .box_axis_stats(v[idx], method, k, probs, sd_mult))
@@ -78,6 +78,26 @@ boxplot3d <- function(data, x = "x", y = "y", z = "z", group = "group",
   }
 
   invisible(stats_by_group)
+}
+
+#' Coerce a column to plain numeric before any statistics
+#'
+#' SPSS-imported data (via haven/labelled) often stores continuous items as
+#' `haven_labelled` vectors, which have no `quantile()` method and make
+#' `stats::quantile()` fail with "quantile.haven_labelled() not
+#' implemented". This strips that wrapper (and any other class/attribute
+#' baggage, e.g. `labelled`) down to a plain numeric vector first.
+#' @noRd
+.as_plain_numeric <- function(v) {
+  if (inherits(v, "haven_labelled") || inherits(v, "labelled") || !is.null(attr(v, "class"))) {
+    attributes(v) <- NULL
+  }
+  v <- as.numeric(v)
+  if (length(v) > 0 && all(is.na(v))) {
+    stop("No se ha podido convertir una de las columnas (x/y/z) a numerica; ",
+         "revisa que sea realmente una variable continua.")
+  }
+  v
 }
 
 #' @noRd

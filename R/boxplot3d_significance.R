@@ -50,7 +50,7 @@ boxplot3d_significance <- function(data, x = "x", y = "y", z = "z", group = "gro
   k <- nlevels(g)
   if (k < 2) stop("Se necesitan al menos 2 grupos.")
 
-  axes <- list(X = data[[x]], Y = data[[y]], Z = data[[z]])
+  axes <- list(X = .as_plain_numeric(data[[x]]), Y = .as_plain_numeric(data[[y]]), Z = .as_plain_numeric(data[[z]]))
   if (scale == 1) axes <- lapply(axes, function(v) as.numeric(scale(v)))
 
   per_axis <- lapply(names(axes), function(nm) {
