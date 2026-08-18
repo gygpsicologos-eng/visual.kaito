@@ -195,14 +195,16 @@ boxplot3d_interactive <- function(data, x = "x", y = "y", z = "z", group = "grou
 
             fig <- plotly::add_trace(fig, type = "scatter3d", mode = "markers",
                                       x = ctr[1], y = ctr[2], z = ctr[3],
-                                      marker = list(symbol = "cross", size = 10, color = "black"),
+                                      marker = list(symbol = "cross", size = 9, color = "black", opacity = 0.55),
                                       name = paste(gr, "(mediana)"), legendgroup = gr,
                                       showlegend = FALSE, hoverinfo = "skip", visible = vis0)
             geom_mode <- c(geom_mode, md); geom_method <- c(geom_method, m)
             geom_role <- c(geom_role, "median"); geom_scale <- c(geom_scale, sc)
-            fig <- plotly::add_trace(fig, type = "scatter3d", mode = "markers",
+            fig <- plotly::add_trace(fig, type = "scatter3d", mode = "markers+text",
                                       x = ctr[1], y = ctr[2], z = ctr[3],
                                       marker = list(symbol = "cross", size = 6, color = col[i]),
+                                      text = gr, textposition = "top center",
+                                      textfont = list(color = col[i], size = 11),
                                       name = paste(gr, "(mediana)"), legendgroup = gr,
                                       showlegend = FALSE, visible = vis0)
             geom_mode <- c(geom_mode, md); geom_method <- c(geom_method, m)
@@ -242,14 +244,16 @@ boxplot3d_interactive <- function(data, x = "x", y = "y", z = "z", group = "grou
 
             fig <- plotly::add_trace(fig, type = "scatter", mode = "markers",
                                       x = ctr[a1], y = ctr[a2], xaxis = "x2", yaxis = "y2",
-                                      marker = list(symbol = "cross", size = 14, color = "black"),
+                                      marker = list(symbol = "cross", size = 12, color = "black", opacity = 0.55),
                                       name = paste(gr, "(mediana)"), legendgroup = gr,
                                       showlegend = FALSE, hoverinfo = "skip", visible = vis0)
             geom_mode <- c(geom_mode, md); geom_method <- c(geom_method, m)
             geom_role <- c(geom_role, "median"); geom_scale <- c(geom_scale, sc)
-            fig <- plotly::add_trace(fig, type = "scatter", mode = "markers",
+            fig <- plotly::add_trace(fig, type = "scatter", mode = "markers+text",
                                       x = ctr[a1], y = ctr[a2], xaxis = "x2", yaxis = "y2",
                                       marker = list(symbol = "cross", size = 9, color = col[i]),
+                                      text = gr, textposition = "top center",
+                                      textfont = list(color = col[i], size = 11),
                                       name = paste(gr, "(mediana)"), legendgroup = gr,
                                       showlegend = FALSE, visible = vis0)
             geom_mode <- c(geom_mode, md); geom_method <- c(geom_method, m)
@@ -319,7 +323,7 @@ boxplot3d_interactive <- function(data, x = "x", y = "y", z = "z", group = "grou
     yaxis2 = list(domain = c(0, 0.001), visible = FALSE, title = list(text = ax_titles_by_scale[[default_scale]][2]),
                   showgrid = grid3d == 1, gridcolor = GRIDCOL, anchor = "x2"),
     legend = list(x = 1.02, y = 0.5),
-    margin = list(t = 220)
+    margin = list(t = 150)
   )
 
   fig <- htmlwidgets::onRender(fig, "
@@ -386,20 +390,20 @@ boxplot3d_interactive <- function(data, x = "x", y = "y", z = "z", group = "grou
   ))
 
   fig <- plotly::layout(fig, updatemenus = list(
-    list(type = "buttons", direction = "right", x = 0.0, y = 1.55, xanchor = "left", yanchor = "top",
-         name = "vista", active = 0, pad = list(t = 4, b = 4),
+    list(type = "buttons", direction = "right", x = 0.0, y = 1.28, xanchor = "left", yanchor = "top",
+         name = "vista", active = 0, pad = list(t = 1, b = 1, l = 2, r = 2),
          buttons = lapply(modes, function(md) list(method = "skip", label = mode_labels[[md]], args = list()))),
-    list(type = "dropdown", direction = "down", x = 0.0, y = 1.42, xanchor = "left", yanchor = "top",
-         name = "metodo", active = match(default_method, methods) - 1, pad = list(t = 4, b = 4),
+    list(type = "dropdown", direction = "down", x = 0.0, y = 1.215, xanchor = "left", yanchor = "top",
+         name = "metodo", active = match(default_method, methods) - 1, pad = list(t = 1, b = 1, l = 2, r = 2),
          buttons = lapply(methods, function(m) list(method = "skip", label = method_labels[[m]], args = list()))),
-    list(type = "dropdown", direction = "down", x = 0.0, y = 1.29, xanchor = "left", yanchor = "top",
-         name = "colorby", active = 0, pad = list(t = 4, b = 4),
+    list(type = "dropdown", direction = "down", x = 0.0, y = 1.15, xanchor = "left", yanchor = "top",
+         name = "colorby", active = 0, pad = list(t = 1, b = 1, l = 2, r = 2),
          buttons = lapply(color_by, function(cb) list(method = "skip", label = paste("Color:", cb), args = list()))),
-    list(type = "dropdown", direction = "down", x = 0.0, y = 1.16, xanchor = "left", yanchor = "top",
-         name = "escala", active = match(default_scale, scales_) - 1, pad = list(t = 4, b = 4),
+    list(type = "dropdown", direction = "down", x = 0.0, y = 1.085, xanchor = "left", yanchor = "top",
+         name = "escala", active = match(default_scale, scales_) - 1, pad = list(t = 1, b = 1, l = 2, r = 2),
          buttons = lapply(scales_, function(sc) list(method = "skip", label = scale_labels[[sc]], args = list()))),
-    list(type = "buttons", direction = "right", x = 0.0, y = 1.03, xanchor = "left", yanchor = "top",
-         name = "grid", pad = list(t = 4, b = 4),
+    list(type = "buttons", direction = "right", x = 0.0, y = 1.02, xanchor = "left", yanchor = "top",
+         name = "grid", pad = list(t = 1, b = 1, l = 2, r = 2),
          buttons = list(
            list(method = "relayout", label = "Cuadricula: ON",
                 args = list(list(`scene.xaxis.showbackground` = TRUE, `scene.xaxis.showgrid` = TRUE,
