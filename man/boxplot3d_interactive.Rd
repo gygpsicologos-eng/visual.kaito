@@ -25,12 +25,19 @@ boxplot3d_interactive(
 \arguments{
 \item{data}{A data frame with the three axes and the grouping variable.}
 
-\item{x, y, z}{Character. Column names of the three continuous axes.}
+\item{x, y, z}{Character. Column names of the three continuous axes.
+These names (or, if you pass friendlier ones, whatever you pass
+here) are used verbatim as the axis titles -- so if you renamed your
+columns to generic \code{"x"}/\code{"y"}/\code{"z"} before calling this function,
+that is what will show on the axes. Passing the original column
+names directly (e.g. \code{x = "Score_ISI"}), without renaming the data
+frame first, gives you meaningful axis labels for free.}
 
 \item{group}{Character. Column name of the grouping variable.}
 
-\item{tukey, percentile, sd, letter_value}{0/1 flags selecting the
-box/whisker convention. Exactly one must be 1.}
+\item{tukey, percentile, sd, letter_value}{0/1 flags selecting which
+convention is shown initially (you can switch live afterward via the
+"Metodo" dropdown). Exactly one must be 1.}
 
 \item{k}{Numeric. Tukey fence multiplier (default 1.5).}
 
@@ -44,8 +51,8 @@ for the \code{sd} convention (default \code{c(1, 2)}).}
 plotting, so axes on very different units/scales are shown on a
 common scale.}
 
-\item{grid3d}{0/1. If 1 (default), draw the shaded wall/floor grid
-panels behind the scene; if 0, a plain background.}
+\item{grid3d}{0/1. Initial state of the wall/floor grid (default 1 =
+on); also togglable live from the plot itself.}
 
 \item{col}{Optional character vector of colors, one per group.}
 }
@@ -55,21 +62,31 @@ A \code{plotly} htmlwidget object.
 \description{
 Draws a single interactive 3D scene (via \pkg{plotly}) with one
 translucent cuboid per group spanning the box on all three axes at
-once, whiskers along each axis, a cross-shaped median marker, faint raw
-points, and outliers (when the method produces any) as open diamonds.
-The scene rotates with click-drag, pans with right-click/shift-drag,
-and zooms with the mouse wheel — all native \pkg{plotly} behavior.
+once, whiskers along each axis, a cross-shaped median marker (a black
+halo plus a smaller marker in the group's own color, so medians stay
+distinguishable by group even when they land close together), faint
+raw points, and outliers (when the method produces any) as open
+diamonds. The scene rotates with click-drag, pans with right-click or
+shift-drag, and zooms with the mouse wheel -- all native \pkg{plotly}
+behavior.
 }
 \details{
-Exactly one of \code{tukey}, \code{percentile}, \code{sd}, \code{letter_value} must be 1
-(the rest 0): this selects how the box and whiskers are defined, using
-the same four conventions as \code{\link[=boxplot3d]{boxplot3d()}} (see that function's
-documentation for details on each).
+Unlike \code{\link[=boxplot3d]{boxplot3d()}}, which requires picking exactly one whisker
+convention up front, this function precomputes all four conventions
+(tukey/percentile/sd/letter_value -- see \code{\link[=boxplot3d]{boxplot3d()}} for what each
+one means) and lets you switch between them live with the "Metodo"
+dropdown above the plot, without re-calling the function. The
+\code{tukey}/\code{percentile}/\code{sd}/\code{letter_value} arguments only choose which
+one is shown first.
 
-Four buttons above the plot jump the camera to preset views: a general
-3D angle, and three axis-pair views (1-2, 2-3, 1-3) that look straight
-down the third axis, mirroring the pairwise panels of \code{\link[=boxplot3d]{boxplot3d()}}
-while keeping the scene fully rotatable afterward.
+Three groups of controls sit above the plot:
+\itemize{
+\item View buttons: a general 3D angle, and three axis-pair views
+(1-2, 2-3, 1-3) that look straight down the third axis -- the scene
+stays fully rotatable afterward.
+\item A "Metodo" dropdown to switch box/whisker convention live.
+\item A grid on/off toggle for the wall/floor panels.
+}
 }
 \examples{
 set.seed(1)
