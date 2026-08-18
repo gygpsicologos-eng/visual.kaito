@@ -3,3 +3,4 @@
 export(boxplot3d)
 export(boxplot3d_interactive)
 export(boxplot3d_significance)
+export(ttest_plot)
