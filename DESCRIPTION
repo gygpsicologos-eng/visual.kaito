@@ -1,0 +1,10 @@
+Package: visual.kaito
+Title: 3D (Triaxial) Box Plots with Multiple Whisker Conventions
+Version: 0.0.0.9000
+Authors@R: 
+    person("Armando", "González Sánchez", , "gygpsicologos@gmail.com", role = c("aut", "cre"))
+Description: Draws interactive, rotatable box-and-whisker plots on three continuous axes at once (a generalization of the classic 2-axis box plot). Supports Tukey, fixed-percentile, mean +/- SD, and letter-value box/whisker conventions, plus parametric and non-parametric significance testing (per-axis and joint 3D via MANOVA / PERMANOVA) across groups.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.0
