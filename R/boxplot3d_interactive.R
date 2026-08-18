@@ -319,7 +319,7 @@ boxplot3d_interactive <- function(data, x = "x", y = "y", z = "z", group = "grou
     yaxis2 = list(domain = c(0, 0.001), visible = FALSE, title = list(text = ax_titles_by_scale[[default_scale]][2]),
                   showgrid = grid3d == 1, gridcolor = GRIDCOL, anchor = "x2"),
     legend = list(x = 1.02, y = 0.5),
-    margin = list(t = 90)
+    margin = list(t = 220)
   )
 
   fig <- htmlwidgets::onRender(fig, "
@@ -386,20 +386,20 @@ boxplot3d_interactive <- function(data, x = "x", y = "y", z = "z", group = "grou
   ))
 
   fig <- plotly::layout(fig, updatemenus = list(
-    list(type = "buttons", direction = "right", x = 0.0, y = 1.18, xanchor = "left",
-         name = "vista", active = 0,
+    list(type = "buttons", direction = "right", x = 0.0, y = 1.55, xanchor = "left", yanchor = "top",
+         name = "vista", active = 0, pad = list(t = 4, b = 4),
          buttons = lapply(modes, function(md) list(method = "skip", label = mode_labels[[md]], args = list()))),
-    list(type = "dropdown", direction = "down", x = 0.20, y = 1.18, xanchor = "left",
-         name = "metodo", active = match(default_method, methods) - 1,
+    list(type = "dropdown", direction = "down", x = 0.0, y = 1.42, xanchor = "left", yanchor = "top",
+         name = "metodo", active = match(default_method, methods) - 1, pad = list(t = 4, b = 4),
          buttons = lapply(methods, function(m) list(method = "skip", label = method_labels[[m]], args = list()))),
-    list(type = "dropdown", direction = "down", x = 0.38, y = 1.18, xanchor = "left",
-         name = "colorby", active = 0,
+    list(type = "dropdown", direction = "down", x = 0.0, y = 1.29, xanchor = "left", yanchor = "top",
+         name = "colorby", active = 0, pad = list(t = 4, b = 4),
          buttons = lapply(color_by, function(cb) list(method = "skip", label = paste("Color:", cb), args = list()))),
-    list(type = "dropdown", direction = "down", x = 0.60, y = 1.18, xanchor = "left",
-         name = "escala", active = match(default_scale, scales_) - 1,
+    list(type = "dropdown", direction = "down", x = 0.0, y = 1.16, xanchor = "left", yanchor = "top",
+         name = "escala", active = match(default_scale, scales_) - 1, pad = list(t = 4, b = 4),
          buttons = lapply(scales_, function(sc) list(method = "skip", label = scale_labels[[sc]], args = list()))),
-    list(type = "buttons", direction = "left", x = 1.0, y = 1.18, xanchor = "right",
-         name = "grid",
+    list(type = "buttons", direction = "right", x = 0.0, y = 1.03, xanchor = "left", yanchor = "top",
+         name = "grid", pad = list(t = 4, b = 4),
          buttons = list(
            list(method = "relayout", label = "Cuadricula: ON",
                 args = list(list(`scene.xaxis.showbackground` = TRUE, `scene.xaxis.showgrid` = TRUE,
