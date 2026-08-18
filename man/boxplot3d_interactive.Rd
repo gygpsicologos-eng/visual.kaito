@@ -19,6 +19,7 @@ boxplot3d_interactive(
   sd_mult = c(1, 2),
   scale = 0,
   grid3d = 1,
+  color_by = NULL,
   col = NULL
 )
 }
@@ -26,18 +27,16 @@ boxplot3d_interactive(
 \item{data}{A data frame with the three axes and the grouping variable.}
 
 \item{x, y, z}{Character. Column names of the three continuous axes.
-These names (or, if you pass friendlier ones, whatever you pass
-here) are used verbatim as the axis titles -- so if you renamed your
-columns to generic \code{"x"}/\code{"y"}/\code{"z"} before calling this function,
-that is what will show on the axes. Passing the original column
-names directly (e.g. \code{x = "Score_ISI"}), without renaming the data
-frame first, gives you meaningful axis labels for free.}
+These names are used verbatim as the axis titles, so pass the real
+column names directly (e.g. \code{x = "Score_ISI"}) rather than renaming
+your data frame's columns to generic \code{"x"}/\code{"y"}/\code{"z"} first.}
 
-\item{group}{Character. Column name of the grouping variable.}
+\item{group}{Character. Column name of the grouping variable that
+defines the boxes being compared.}
 
 \item{tukey, percentile, sd, letter_value}{0/1 flags selecting which
-convention is shown initially (you can switch live afterward via the
-"Metodo" dropdown). Exactly one must be 1.}
+convention is shown initially (switchable live via "Metodo").
+Exactly one must be 1.}
 
 \item{k}{Numeric. Tukey fence multiplier (default 1.5).}
 
@@ -51,41 +50,49 @@ for the \code{sd} convention (default \code{c(1, 2)}).}
 plotting, so axes on very different units/scales are shown on a
 common scale.}
 
-\item{grid3d}{0/1. Initial state of the wall/floor grid (default 1 =
+\item{grid3d}{0/1. Initial state of the background grid (default 1 =
 on); also togglable live from the plot itself.}
 
-\item{col}{Optional character vector of colors, one per group.}
+\item{color_by}{Optional character vector of column names to offer in
+the "Agrupar por" dropdown (for recoloring individual points). If
+\code{NULL} (default), \code{group} is offered together with any other
+factor/character/logical column found in \code{data}.}
+
+\item{col}{Optional character vector of colors, one per level of
+\code{group}.}
 }
 \value{
 A \code{plotly} htmlwidget object.
 }
 \description{
-Draws a single interactive 3D scene (via \pkg{plotly}) with one
-translucent cuboid per group spanning the box on all three axes at
-once, whiskers along each axis, a cross-shaped median marker (a black
-halo plus a smaller marker in the group's own color, so medians stay
+Draws a single interactive scene (via \pkg{plotly}) that can show either
+a rotatable 3D view with one translucent cuboid per group spanning the
+box on all three axes at once, or a true flat 2D panel for any one pair
+of axes (x-axis at the bottom, y-axis on the left -- an ordinary 2D
+plot, not a 3D scene viewed from a fixed camera angle). Each box shows
+whiskers along its axes, a cross-shaped median marker (a black halo
+plus a smaller marker in the group's own color, so medians stay
 distinguishable by group even when they land close together), faint
 raw points, and outliers (when the method produces any) as open
-diamonds. The scene rotates with click-drag, pans with right-click or
-shift-drag, and zooms with the mouse wheel -- all native \pkg{plotly}
-behavior.
+diamonds. In 3D mode the scene rotates with click-drag, pans with
+right-click or shift-drag, and zooms with the mouse wheel.
 }
 \details{
-Unlike \code{\link[=boxplot3d]{boxplot3d()}}, which requires picking exactly one whisker
-convention up front, this function precomputes all four conventions
-(tukey/percentile/sd/letter_value -- see \code{\link[=boxplot3d]{boxplot3d()}} for what each
-one means) and lets you switch between them live with the "Metodo"
-dropdown above the plot, without re-calling the function. The
-\code{tukey}/\code{percentile}/\code{sd}/\code{letter_value} arguments only choose which
-one is shown first.
-
-Three groups of controls sit above the plot:
+This function precomputes all four whisker conventions (see
+\code{\link[=boxplot3d]{boxplot3d()}} for what tukey/percentile/sd/letter_value mean) and all
+four views (3D plus the three axis-pair 2D panels), and lets you
+switch between them live with the controls above the plot, without
+re-calling the function:
 \itemize{
-\item View buttons: a general 3D angle, and three axis-pair views
-(1-2, 2-3, 1-3) that look straight down the third axis -- the scene
-stays fully rotatable afterward.
-\item A "Metodo" dropdown to switch box/whisker convention live.
-\item A grid on/off toggle for the wall/floor panels.
+\item \strong{Vista}: 3D, or a flat 2D panel for axes 1-2, 2-3, or 1-3.
+\item \strong{Metodo}: which box/whisker convention to draw.
+\item \strong{Agrupar por}: which column colors the individual raw
+data points (subjects). This only recolors the points -- the boxes,
+whiskers and medians always reflect the \code{group} argument, since
+that is what defines the statistical groups being compared. By
+default this offers \code{group} itself plus any other factor/character
+column found in \code{data}.
+\item \strong{Cuadricula}: on/off for the background grid.
 }
 }
 \examples{
