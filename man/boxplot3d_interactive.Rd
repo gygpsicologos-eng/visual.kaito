@@ -46,9 +46,8 @@ Exactly one must be 1.}
 \item{sd_mult}{Length-2 numeric. Box and whisker multipliers (in SDs)
 for the \code{sd} convention (default \code{c(1, 2)}).}
 
-\item{scale}{0/1. If 1, standardize (z-score) \code{x}, \code{y}, \code{z} before
-plotting, so axes on very different units/scales are shown on a
-common scale.}
+\item{scale}{0/1. Which scale is shown initially: 0 = raw values,
+1 = standardized (z-score). Switchable live via "Escala".}
 
 \item{grid3d}{0/1. Initial state of the background grid (default 1 =
 on); also togglable live from the plot itself.}
@@ -69,19 +68,22 @@ Draws a single interactive scene (via \pkg{plotly}) that can show either
 a rotatable 3D view with one translucent cuboid per group spanning the
 box on all three axes at once, or a true flat 2D panel for any one pair
 of axes (x-axis at the bottom, y-axis on the left -- an ordinary 2D
-plot, not a 3D scene viewed from a fixed camera angle). Each box shows
-whiskers along its axes, a cross-shaped median marker (a black halo
-plus a smaller marker in the group's own color, so medians stay
-distinguishable by group even when they land close together), faint
-raw points, and outliers (when the method produces any) as open
+plot, not a 3D scene viewed from a fixed camera angle). Each 3D box is
+drawn with crisp wireframe edges (flat-shaded faces plus explicit edge
+lines) so its shape reads clearly instead of as a smooth blob. Each box
+also shows whiskers along its axes, a cross-shaped median marker (a
+black halo plus a smaller marker in the group's own color, so medians
+stay distinguishable by group even when they land close together),
+faint raw points, and outliers (when the method produces any) as open
 diamonds. In 3D mode the scene rotates with click-drag, pans with
 right-click or shift-drag, and zooms with the mouse wheel.
 }
 \details{
 This function precomputes all four whisker conventions (see
-\code{\link[=boxplot3d]{boxplot3d()}} for what tukey/percentile/sd/letter_value mean) and all
-four views (3D plus the three axis-pair 2D panels), and lets you
-switch between them live with the controls above the plot, without
+\code{\link[=boxplot3d]{boxplot3d()}} for what tukey/percentile/sd/letter_value mean), all four
+views (3D plus the three axis-pair 2D panels), and both the raw and
+standardized (z-score) versions of the data, and lets you switch
+between all of them live with the controls above the plot, without
 re-calling the function:
 \itemize{
 \item \strong{Vista}: 3D, or a flat 2D panel for axes 1-2, 2-3, or 1-3.
@@ -92,6 +94,8 @@ whiskers and medians always reflect the \code{group} argument, since
 that is what defines the statistical groups being compared. By
 default this offers \code{group} itself plus any other factor/character
 column found in \code{data}.
+\item \strong{Escala}: raw values, or all three axes standardized
+(z-score) to a common scale.
 \item \strong{Cuadricula}: on/off for the background grid.
 }
 }
