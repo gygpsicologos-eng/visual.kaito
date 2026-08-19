@@ -3,5 +3,6 @@
 export(boxplot3d)
 export(boxplot3d_interactive)
 export(boxplot3d_significance)
+export(manova_plot3d)
 export(ttest_plot)
 export(ttest_plot3d)
