@@ -7,8 +7,8 @@ authors:
     given-names: "Armando"
     orcid: "https://orcid.org/0000-0002-6182-1000"
     email: "gygpsicologos@gmail.com"
-version: 0.0.0.9000
-date-released: 2026-08-19
+version: 0.1.0
+date-released: 2026-08-20
 url: "https://github.com/gygpsicologos-eng/visual.kaito"
 repository-code: "https://github.com/gygpsicologos-eng/visual.kaito"
 license: MIT
