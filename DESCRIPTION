@@ -13,4 +13,6 @@ BugReports: https://github.com/gygpsicologos-eng/visual.kaito/issues
 Suggests: 
     htmlwidgets,
     multcomp,
-    plotly
+    plotly,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
