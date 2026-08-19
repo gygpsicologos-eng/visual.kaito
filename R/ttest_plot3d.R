@@ -17,6 +17,19 @@
 #' also disagree with the joint Hotelling result; that disagreement is
 #' informative, not a bug, so all three are reported rather than picking one.
 #'
+#' The plot has 3 live controls, all pre-computed so they respond instantly
+#' without needing R again: a slider to adjust the transparency of the two
+#' group surfaces (the overlap surface always stays solid, so the shared
+#' region remains readable at any transparency level); a dropdown to choose
+#' which of the reported statistics show in the on-plot text box (all of
+#' them, only the per-axis t-tests, only Hotelling, or only the overlap
+#' percentage); and a button pair to switch the surfaces between raw units
+#' and standardized (z-score) units. Standardizing only changes what the
+#' surfaces look like -- the t-test, Hotelling and overlap numbers are
+#' mathematically identical either way, since all three are invariant to a
+#' shared linear rescaling of the axes -- so the text box does not change
+#' when you switch scales.
+#'
 #' @param data A data frame with the two continuous axes and the grouping
 #'   variable.
 #' @param x,z Character. Column names of the two continuous axes.
@@ -27,6 +40,8 @@
 #' @param conf.level Confidence level for the per-axis t-tests (default 0.95).
 #' @param n_grid Integer. Grid resolution per axis for the density surfaces
 #'   and the numerical overlap estimate (default 60).
+#' @param opacity Initial opacity (0-1) of the two group surfaces (default
+#'   0.55); adjustable afterwards with the transparency slider.
 #' @param col Length-2 character vector of colors, one per group.
 #' @param col_overlap Color used to mark the region where the two surfaces
 #'   overlap.
@@ -49,7 +64,8 @@
 #' @export
 ttest_plot3d <- function(data, x = "x", z = "z", group = "group",
                           var.equal = FALSE, conf.level = 0.95,
-                          n_grid = 60, col = c("#2a78d6", "#eb6834"),
+                          n_grid = 60, opacity = 0.55,
+                          col = c("#2a78d6", "#eb6834"),
                           col_overlap = "#4a3aa7") {
   if (!requireNamespace("plotly", quietly = TRUE)) {
     stop("El paquete 'plotly' es necesario para ttest_plot3d(). ",
@@ -59,7 +75,7 @@ ttest_plot3d <- function(data, x = "x", z = "z", group = "group",
     stop("El paquete 'htmlwidgets' es necesario para ttest_plot3d(). ",
          "Instalalo con install.packages('htmlwidgets').")
   }
-  stopifnot(conf.level > 0, conf.level < 1)
+  stopifnot(conf.level > 0, conf.level < 1, opacity > 0, opacity <= 1)
 
   xv <- .as_plain_numeric(data[[x]])
   zv <- .as_plain_numeric(data[[z]])
@@ -80,44 +96,60 @@ ttest_plot3d <- function(data, x = "x", z = "z", group = "group",
   t_z <- stats::t.test(zv[idx[[1]]], zv[idx[[2]]], var.equal = var.equal, conf.level = conf.level)
   hotelling <- .hotelling_t2(means[[1]], means[[2]], covs[[1]], covs[[2]], n[1], n[2])
 
-  rx <- range(xv); rz <- range(zv)
-  pad_x <- diff(rx) * 0.3; pad_z <- diff(rz) * 0.3
-  xs <- seq(rx[1] - pad_x, rx[2] + pad_x, length.out = n_grid)
-  zs <- seq(rz[1] - pad_z, rz[2] + pad_z, length.out = n_grid)
-  D1 <- outer(xs, zs, function(a, b) .dmvnorm2(a, b, means[[1]], covs[[1]]))
-  D2 <- outer(xs, zs, function(a, b) .dmvnorm2(a, b, means[[2]], covs[[2]]))
-  ov <- pmin(D1, D2)
-  cell <- (xs[2] - xs[1]) * (zs[2] - zs[1])
-  ovl_coef <- sum(ov) * cell
+  # Standardized (z-score) copy of the two axes, for the "raw vs standardized" toggle.
+  # t-tests, Hotelling and overlap are invariant to this shared linear rescaling, so
+  # only the surfaces (and axis titles) differ; the reported numbers do not.
+  xv_z <- as.numeric(scale(xv)); zv_z <- as.numeric(scale(zv))
+  means_z <- lapply(idx, function(i) c(mean(xv_z[i]), mean(zv_z[i])))
+  covs_z <- lapply(idx, function(i) stats::cov(cbind(xv_z[i], zv_z[i])))
 
-  flat_scale <- function(col) list(list(0, col), list(1, col))
+  surf_grid <- function(av, bv, m, cv) {
+    ra <- range(av); rb <- range(bv)
+    pad_a <- diff(ra) * 0.3; pad_b <- diff(rb) * 0.3
+    as_ <- seq(ra[1] - pad_a, ra[2] + pad_a, length.out = n_grid)
+    bs_ <- seq(rb[1] - pad_b, rb[2] + pad_b, length.out = n_grid)
+    D1 <- outer(as_, bs_, function(p, q) .dmvnorm2(p, q, m[[1]], cv[[1]]))
+    D2 <- outer(as_, bs_, function(p, q) .dmvnorm2(p, q, m[[2]], cv[[2]]))
+    ov <- pmin(D1, D2)
+    cell <- (as_[2] - as_[1]) * (bs_[2] - bs_[1])
+    ov_masked <- ov
+    ov_masked[ov_masked < max(ov) * 0.02] <- NA
+    list(as_ = as_, bs_ = bs_, D1 = D1, D2 = D2, ov_masked = ov_masked, ovl_coef = sum(ov) * cell)
+  }
 
+  raw <- surf_grid(xv, zv, means, covs)
+  zsc <- surf_grid(xv_z, zv_z, means_z, covs_z)
+  ovl_coef <- raw$ovl_coef  # identical (up to grid resolution) to zsc$ovl_coef; report the raw-grid estimate
+
+  flat_scale <- function(colr) list(list(0, colr), list(1, colr))
   stars <- function(p) if (p < 0.001) "***" else if (p < 0.01) "**" else
     if (p < 0.05) "*" else if (p < 0.1) "." else ""
-  info_txt <- paste0(
-    sprintf("Solapamiento (OVL) ~ %.1f%%", ovl_coef * 100), "<br>",
-    sprintf("p (eje %s) = %.4g %s", x, t_x$p.value, stars(t_x$p.value)), "<br>",
-    sprintf("p (eje %s) = %.4g %s", z, t_z$p.value, stars(t_z$p.value)), "<br>",
-    sprintf("Hotelling T2: p = %.4g %s", hotelling$p.value, stars(hotelling$p.value))
-  )
 
-  ov_min <- max(ov) * 0.02
-  ov_masked <- ov
-  ov_masked[ov_masked < ov_min] <- NA
+  ovl_line <- sprintf("Solapamiento (OVL) ~ %.1f%%", ovl_coef * 100)
+  px_line <- sprintf("p (eje %s) = %.4g %s", x, t_x$p.value, stars(t_x$p.value))
+  pz_line <- sprintf("p (eje %s) = %.4g %s", z, t_z$p.value, stars(t_z$p.value))
+  hot_line <- sprintf("Hotelling T2: p = %.4g %s", hotelling$p.value, stars(hotelling$p.value))
+  txt_all <- paste(ovl_line, px_line, pz_line, hot_line, sep = "<br>")
+  txt_axes <- paste(ovl_line, px_line, pz_line, sep = "<br>")
+  txt_hotelling <- paste(ovl_line, hot_line, sep = "<br>")
+  txt_overlap <- ovl_line
 
   fig <- plotly::plot_ly()
-  fig <- plotly::add_trace(fig, x = xs, y = zs, z = t(D1), type = "surface",
-    colorscale = flat_scale(col[1]), showscale = FALSE, opacity = 0.55,
+  fig <- plotly::add_trace(fig, x = raw$as_, y = raw$bs_, z = t(raw$D1), type = "surface",
+    colorscale = flat_scale(col[1]), showscale = FALSE, opacity = opacity,
     contours = list(x = list(show = FALSE), y = list(show = FALSE), z = list(show = FALSE)),
     name = groups[1])
-  fig <- plotly::add_trace(fig, x = xs, y = zs, z = t(D2), type = "surface",
-    colorscale = flat_scale(col[2]), showscale = FALSE, opacity = 0.55,
+  fig <- plotly::add_trace(fig, x = raw$as_, y = raw$bs_, z = t(raw$D2), type = "surface",
+    colorscale = flat_scale(col[2]), showscale = FALSE, opacity = opacity,
     contours = list(x = list(show = FALSE), y = list(show = FALSE), z = list(show = FALSE)),
     name = groups[2])
-  fig <- plotly::add_trace(fig, x = xs, y = zs, z = t(ov_masked), type = "surface",
+  fig <- plotly::add_trace(fig, x = raw$as_, y = raw$bs_, z = t(raw$ov_masked), type = "surface",
     colorscale = flat_scale(col_overlap), showscale = FALSE, opacity = 0.95,
     contours = list(x = list(show = FALSE), y = list(show = FALSE), z = list(show = FALSE)),
     name = "Solapamiento")
+
+  op_vals <- c(0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95)
+  op_active <- which.min(abs(op_vals - opacity)) - 1L
 
   fig <- plotly::layout(fig,
     title = list(text = paste0("Comparacion bivariada: ", groups[1], " vs ", groups[2])),
@@ -128,10 +160,55 @@ ttest_plot3d <- function(data, x = "x", z = "z", group = "group",
       camera = list(eye = list(x = 1.5, y = -1.5, z = 0.9))
     ),
     annotations = list(list(
-      text = info_txt, xref = "paper", yref = "paper",
+      text = txt_all, xref = "paper", yref = "paper",
       x = 0.99, y = 0.9, xanchor = "right", yanchor = "top",
       showarrow = FALSE, align = "left", bordercolor = "#e1e0d9", borderwidth = 1,
       borderpad = 6, bgcolor = "#fcfcfb", font = list(size = 12, color = "#0b0b0b")
+    )),
+    updatemenus = list(
+      list(
+        type = "dropdown", direction = "down", showactive = TRUE,
+        x = 0, y = 1.15, xanchor = "left", yanchor = "top",
+        pad = list(t = 0, b = 0, l = 1, r = 1),
+        buttons = list(
+          list(method = "relayout", label = "Reportar: todas",
+               args = list(list(`annotations[0].text` = txt_all))),
+          list(method = "relayout", label = "Reportar: solo ejes",
+               args = list(list(`annotations[0].text` = txt_axes))),
+          list(method = "relayout", label = "Reportar: solo Hotelling",
+               args = list(list(`annotations[0].text` = txt_hotelling))),
+          list(method = "relayout", label = "Reportar: solo solapamiento",
+               args = list(list(`annotations[0].text` = txt_overlap)))
+        )
+      ),
+      list(
+        type = "buttons", direction = "right", showactive = TRUE,
+        x = 0, y = 1.08, xanchor = "left", yanchor = "top",
+        pad = list(t = 0, b = 0, l = 1, r = 1),
+        buttons = list(
+          list(method = "update", label = "Datos brutos", args = list(
+                 list(x = list(raw$as_, raw$as_, raw$as_), y = list(raw$bs_, raw$bs_, raw$bs_),
+                      z = list(t(raw$D1), t(raw$D2), t(raw$ov_masked))),
+                 list(`scene.xaxis.title.text` = x, `scene.yaxis.title.text` = z),
+                 list(0, 1, 2))),
+          list(method = "update", label = "Datos estandarizados", args = list(
+                 list(x = list(zsc$as_, zsc$as_, zsc$as_), y = list(zsc$bs_, zsc$bs_, zsc$bs_),
+                      z = list(t(zsc$D1), t(zsc$D2), t(zsc$ov_masked))),
+                 list(`scene.xaxis.title.text` = paste0(x, " (z-score)"),
+                      `scene.yaxis.title.text` = paste0(z, " (z-score)")),
+                 list(0, 1, 2)))
+        )
+      )
+    ),
+    sliders = list(list(
+      active = op_active,
+      currentvalue = list(prefix = "Transparencia: "),
+      x = 0, len = 0.32, xanchor = "left", y = -0.02, yanchor = "top",
+      pad = list(t = 10),
+      steps = lapply(op_vals, function(v) list(
+        method = "restyle", label = sprintf("%d%%", round(v * 100)),
+        args = list(list(opacity = v), list(0, 1))
+      ))
     ))
   )
 

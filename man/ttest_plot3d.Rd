@@ -12,6 +12,7 @@ ttest_plot3d(
   var.equal = FALSE,
   conf.level = 0.95,
   n_grid = 60,
+  opacity = 0.55,
   col = c("#2a78d6", "#eb6834"),
   col_overlap = "#4a3aa7"
 )
@@ -32,6 +33,9 @@ exactly 2 levels.}
 
 \item{n_grid}{Integer. Grid resolution per axis for the density surfaces
 and the numerical overlap estimate (default 60).}
+
+\item{opacity}{Initial opacity (0-1) of the two group surfaces (default
+0.55); adjustable afterwards with the transparency slider.}
 
 \item{col}{Length-2 character vector of colors, one per group.}
 
@@ -64,6 +68,19 @@ collapses to a single F-statistic and p-value. The per-axis t-tests can
 disagree with each other (significant on one axis, not the other) and can
 also disagree with the joint Hotelling result; that disagreement is
 informative, not a bug, so all three are reported rather than picking one.
+
+The plot has 3 live controls, all pre-computed so they respond instantly
+without needing R again: a slider to adjust the transparency of the two
+group surfaces (the overlap surface always stays solid, so the shared
+region remains readable at any transparency level); a dropdown to choose
+which of the reported statistics show in the on-plot text box (all of
+them, only the per-axis t-tests, only Hotelling, or only the overlap
+percentage); and a button pair to switch the surfaces between raw units
+and standardized (z-score) units. Standardizing only changes what the
+surfaces look like -- the t-test, Hotelling and overlap numbers are
+mathematically identical either way, since all three are invariant to a
+shared linear rescaling of the axes -- so the text box does not change
+when you switch scales.
 }
 \examples{
 set.seed(1)
