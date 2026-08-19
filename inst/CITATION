@@ -8,5 +8,6 @@ bibentry(
                     comment = c(ORCID = "0000-0002-6182-1000")),
   year    = "2026",
   note    = "R package version 0.1.0",
-  url     = "https://github.com/gygpsicologos-eng/visual.kaito"
+  url     = "https://github.com/gygpsicologos-eng/visual.kaito",
+  doi     = "10.5281/zenodo.22019396"
 )
