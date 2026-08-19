@@ -2,7 +2,8 @@ Package: visual.kaito
 Title: Interactive 3D Visualizations for Group Comparisons
 Version: 0.0.0.9000
 Authors@R: 
-    person("Armando", "González Sánchez", , "gygpsicologos@gmail.com", role = c("aut", "cre"))
+    person("Armando", "González Sánchez", , "gygpsicologos@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-6182-1000"))
 Description: Draws interactive, rotatable statistical visualizations in three dimensions, built on 'plotly'. Two families of plots are provided. Triaxial box plots (boxplot3d(), boxplot3d_interactive()) compare groups on three continuous variables at once, with Tukey, fixed-percentile, mean +/- SD, and letter-value box/whisker conventions, plus parametric and non-parametric significance testing (per-axis and joint 3D via MANOVA / PERMANOVA). Bivariate density plots (ttest_plot3d(), manova_plot3d()) compare two or more groups on two continuous variables as overlapping 3D density surfaces, reporting per-axis t-tests together with a joint Hotelling's T-squared test (two groups), or a one-way MANOVA omnibus test with Bonferroni, Tukey, Fisher's LSD, and Dunnett post-hoc comparisons (more than two groups). All plots include live, pre-computed controls (view, method, scale, transparency) so results can be explored interactively without re-running R code.
 License: MIT + file LICENSE
 Encoding: UTF-8
