@@ -69,18 +69,30 @@ disagree with each other (significant on one axis, not the other) and can
 also disagree with the joint Hotelling result; that disagreement is
 informative, not a bug, so all three are reported rather than picking one.
 
-The plot has 3 live controls, all pre-computed so they respond instantly
-without needing R again: a slider to adjust the transparency of the two
-group surfaces (the overlap surface always stays solid, so the shared
-region remains readable at any transparency level); a dropdown to choose
-which of the reported statistics show in the on-plot text box (all of
-them, only the per-axis t-tests, only Hotelling, or only the overlap
-percentage); and a button pair to switch the surfaces between raw units
-and standardized (z-score) units. Standardizing only changes what the
+The plot has 4 live controls, all pre-computed so they respond instantly
+without needing R again:
+\itemize{
+\item A "Vista" menu switches between the full 3D scene and 3 flat 2D
+views (same convention as \code{\link[=boxplot3d_interactive]{boxplot3d_interactive()}}'s axis-pair
+panels, built as a true flat second cartesian layer, not a camera
+trick): \strong{Eje x} and \strong{Eje z} each show that one
+variable's two group curves (density vs. value) with the shared
+region shaded, and \strong{Ambos ejes} shows a top-down contour view
+of both mountains at once, with the same shaded overlap footprint.
+\item A transparency slider adjusts the opacity of the two group
+surfaces in the 3D view (the overlap surface always stays solid, so
+the shared region remains readable at any transparency level).
+\item A "Reportar" dropdown chooses which of the reported statistics
+show in the on-plot text box (all of them, only the per-axis
+t-tests, only Hotelling, or only the overlap percentage); each
+group's mean and SD on both variables are always shown underneath.
+\item A button pair switches the 3D surfaces between raw units and
+standardized (z-score) units. Standardizing only changes what the
 surfaces look like -- the t-test, Hotelling and overlap numbers are
-mathematically identical either way, since all three are invariant to a
-shared linear rescaling of the axes -- so the text box does not change
-when you switch scales.
+mathematically identical either way, since all three are invariant
+to a shared linear rescaling of the axes -- so the text box does not
+change when you switch scales. This toggle only affects the 3D view.
+}
 }
 \examples{
 set.seed(1)
