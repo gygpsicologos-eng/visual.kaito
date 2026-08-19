@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "visual.kaito: Interactive 3D Visualizations for Group Comparisons"
+type: software
+authors:
+  - family-names: "González Sánchez"
+    given-names: "Armando"
+    orcid: "https://orcid.org/0000-0002-6182-1000"
+    email: "gygpsicologos@gmail.com"
+version: 0.0.0.9000
+date-released: 2026-08-19
+url: "https://github.com/gygpsicologos-eng/visual.kaito"
+repository-code: "https://github.com/gygpsicologos-eng/visual.kaito"
+license: MIT
+keywords:
+  - R
+  - data visualization
+  - 3D plots
+  - statistics
+  - psychology

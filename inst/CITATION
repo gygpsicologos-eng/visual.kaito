@@ -1,0 +1,12 @@
+citHeader("To cite visual.kaito in publications, use:")
+
+bibentry(
+  bibtype = "Manual",
+  title   = "visual.kaito: Interactive 3D Visualizations for Group Comparisons",
+  author  = person("Armando", "Gonz\u00e1lez S\u00e1nchez",
+                    email = "gygpsicologos@gmail.com",
+                    comment = c(ORCID = "0000-0002-6182-1000")),
+  year    = "2026",
+  note    = "R package version 0.0.0.9000",
+  url     = "https://github.com/gygpsicologos-eng/visual.kaito"
+)
