@@ -1,0 +1,166 @@
+---
+title: "Introduction to visual.kaito"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to visual.kaito}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+has_deps <- requireNamespace("plotly", quietly = TRUE) &&
+  requireNamespace("htmlwidgets", quietly = TRUE)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  eval = has_deps
+)
+```
+
+## Statement of need
+
+Comparing groups on more than one continuous outcome at a time is routine in
+psychology and other social and health sciences -- for example, comparing a
+clinical and a control group on two related symptom scales, or comparing
+several treatment arms on two outcome measures simultaneously. The standard
+R workflow for this either tests each variable separately (losing the joint,
+multivariate picture) or reports a multivariate test (Hotelling's
+T-squared, MANOVA) as a single number, with no visualization of *what the
+joint distributions actually look like* or *how much they overlap*.
+
+**visual.kaito** addresses this gap by drawing the two (or three) variables'
+joint distributions directly as interactive 3D surfaces, with the visual
+overlap between groups tied to the same statistics being reported (t-tests,
+Hotelling's T-squared, one-way MANOVA, and four post-hoc procedures), rather
+than as a separate, disconnected chart.
+
+## Comparison with existing tools
+
+Several excellent R packages already combine plots with statistical results
+for group comparisons, but none currently draw the interactive 3D joint
+distributions that **visual.kaito** focuses on:
+
+* **ggstatsplot** and **ggpubr** overlay t-test/ANOVA/Kruskal-Wallis results
+  and post-hoc annotations on standard 2D `ggplot2` charts (one variable at
+  a time).
+* **rstatix** provides a tidy interface to the underlying statistical
+  tests (t-test, ANOVA, post-hoc comparisons) but no plotting of its own.
+* **effectsize** computes and reports effect sizes, again without a
+  plotting layer.
+* **superb** focuses on summary/error-bar plots for factorial designs.
+
+**visual.kaito** is not a replacement for these tools -- for a single
+variable, a violin or box plot from `ggstatsplot` is usually the right
+choice. It is meant for the specific case of *two or three continuous
+variables compared jointly*, where seeing the overlap between groups'
+distributions in 3D adds information that a table of per-variable p-values
+does not.
+
+## Installation
+
+```{r, eval = FALSE}
+# install.packages("remotes")
+remotes::install_github("gygpsicologos-eng/visual.kaito")
+```
+
+```{r setup}
+library(visual.kaito)
+```
+
+## Comparing two groups on two variables: `ttest_plot3d()`
+
+`ttest_plot3d()` draws each group as a single bivariate density "mountain"
+over two continuous variables, shades the region where the two mountains
+overlap, and reports three complementary results: a Student's t-test for
+each variable separately, and a joint Hotelling's T-squared test that
+accounts for the correlation between the two variables.
+
+```{r ttest-example}
+set.seed(1)
+df2 <- rbind(
+  data.frame(iq = rnorm(30, 100, 12), anxiety = rnorm(30, 45, 8), group = "Control"),
+  data.frame(iq = rnorm(30, 96, 11), anxiety = rnorm(30, 58, 9), group = "Clinical")
+)
+
+fig2 <- ttest_plot3d(df2, x = "iq", z = "anxiety", group = "group", n_grid = 35)
+fig2
+```
+
+The full numeric results -- group means and covariances, both t-tests, and
+the Hotelling's T-squared test -- are attached to the returned object and
+do not require re-parsing the plot:
+
+```{r ttest-stats}
+str(attr(fig2, "stats"), max.level = 1)
+```
+
+The plot itself ships with four live controls (a view selector, an opacity
+slider, a "what to report" selector, and a raw/standardized toggle) that
+recompute instantly in the browser without calling R again -- useful for
+exploring a result during a meeting or a class, not just for a static
+figure.
+
+## Comparing more than two groups: `manova_plot3d()`
+
+When there are more than two groups, `manova_plot3d()` generalizes the same
+idea: every group is drawn as its own bivariate density mountain, a
+one-way MANOVA (Wilks' lambda) provides the omnibus test, and every pair of
+groups can be compared post hoc using four different procedures --
+Bonferroni, Tukey's HSD, Fisher's LSD ("DMS"), and Dunnett's test against a
+user-chosen reference/control group.
+
+```{r manova-example}
+set.seed(2)
+df3 <- rbind(
+  data.frame(iq = rnorm(25, 100, 12), anxiety = rnorm(25, 45, 8), group = "Control"),
+  data.frame(iq = rnorm(25, 96, 11), anxiety = rnorm(25, 58, 9), group = "Mild"),
+  data.frame(iq = rnorm(25, 90, 13), anxiety = rnorm(25, 66, 10), group = "Severe")
+)
+
+fig3 <- manova_plot3d(df3, x = "iq", z = "anxiety", group = "group",
+                       control = "Control", n_grid = 35)
+fig3
+```
+
+Dunnett's test requires the optional 'multcomp' package. When it is not
+installed, `manova_plot3d()` still draws the full plot with the other three
+post-hoc methods; the Dunnett option shows an explanatory note instead of a
+fabricated result.
+
+## Triaxial box plots: `boxplot3d_interactive()`
+
+For a more traditional (but still 3D and interactive) summary of three
+continuous variables at once, `boxplot3d_interactive()` draws one
+translucent 3D box per group, with whiskers, medians, raw points, and
+outliers, using any of four whisker conventions (Tukey, fixed-percentile,
+mean +/- SD, or letter-value):
+
+```{r box-example}
+set.seed(3)
+df1 <- rbind(
+  data.frame(iq = rnorm(30, 100, 12), anxiety = rnorm(30, 45, 8),
+             mood = rnorm(30, 50, 10), group = "Control"),
+  data.frame(iq = rnorm(30, 96, 11), anxiety = rnorm(30, 58, 9),
+             mood = rnorm(30, 40, 11), group = "Clinical")
+)
+
+boxplot3d_interactive(df1, x = "iq", y = "anxiety", z = "mood", group = "group")
+```
+
+Live controls switch between the 3D scene and flat 2D panels for any pair
+of axes, between whisker conventions, between raw and standardized scales,
+and recolor the raw points by any grouping/categorical column in the data.
+`boxplot3d_significance()` runs the matching statistical tests (per-axis
+and joint, both parametric and non-parametric) without producing a plot,
+for when only the numbers are needed.
+
+## A note on interactivity
+
+Every plot in this vignette is an interactive `htmlwidgets`/`plotly` object:
+drag to rotate, scroll to zoom, and use the on-plot menus and sliders to
+switch views. If you are reading a static (non-HTML) rendering of this
+document, only a snapshot of the initial view will be visible -- build the
+vignette locally (`browseVignettes("visual.kaito")`) or run the examples
+directly to get the full interactive version.

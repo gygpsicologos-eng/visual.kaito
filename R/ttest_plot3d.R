@@ -160,7 +160,7 @@ ttest_plot3d <- function(data, x = "x", z = "z", group = "group",
   txt_overlap <- paste(ovl_line, desc_block, sep = "<br>")
 
   # --- 3D traces (indices 0,1,2): the two group mountains + their overlap ---
-  fig <- plotly::plot_ly()
+  fig <- plotly::plot_ly(height = 850)
   fig <- plotly::add_trace(fig, x = raw$as_, y = raw$bs_, z = t(raw$D1), type = "surface",
     colorscale = flat_scale(col[1]), showscale = FALSE, opacity = opacity,
     contours = list(x = list(show = FALSE), y = list(show = FALSE), z = list(show = FALSE)),
@@ -241,7 +241,10 @@ ttest_plot3d <- function(data, x = "x", z = "z", group = "group",
   )
 
   fig <- plotly::layout(fig,
-    title = list(text = paste0("Comparacion bivariada: ", groups[1], " vs ", groups[2])),
+    title = list(text = paste0("Comparacion bivariada: ", groups[1], " vs ", groups[2]),
+                 x = 1, xanchor = "right", y = 0.98, yanchor = "top"),
+    margin = list(t = 120),
+    legend = list(x = 1.02, y = 0.5),
     scene = list(
       domain = list(x = c(0, 1), y = c(0, 1)),
       xaxis = list(title = list(text = x)),

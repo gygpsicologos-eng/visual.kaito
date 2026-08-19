@@ -144,7 +144,7 @@ boxplot3d_interactive <- function(data, x = "x", y = "y", z = "z", group = "grou
     list(x = ex, y = ey, z = ez)
   }
 
-  fig <- plotly::plot_ly()
+  fig <- plotly::plot_ly(height = 950)
   geom_mode <- character(0); geom_method <- character(0); geom_role <- character(0); geom_scale <- character(0)
   pt_mode <- character(0); pt_colorby <- character(0); pt_scale <- character(0)
 
@@ -336,7 +336,7 @@ boxplot3d_interactive <- function(data, x = "x", y = "y", z = "z", group = "grou
     yaxis2 = list(domain = c(0, 0.001), visible = FALSE, title = list(text = ax_titles_by_scale[[default_scale]][2]),
                   showgrid = grid3d == 1, gridcolor = GRIDCOL, anchor = "x2"),
     legend = list(x = 1.02, y = 0.5),
-    margin = list(t = 95)
+    margin = list(t = 150)
   )
 
   fig <- htmlwidgets::onRender(fig, "

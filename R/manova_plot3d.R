@@ -213,7 +213,7 @@ manova_plot3d <- function(data, x = "x", z = "z", group = "group",
 
   flat_scale <- function(colr) list(list(0, colr), list(1, colr))
 
-  fig <- plotly::plot_ly()
+  fig <- plotly::plot_ly(height = 850)
   for (i in seq_len(G)) {
     fig <- plotly::add_trace(fig, x = grid_raw$as_, y = grid_raw$bs_, z = t(D_raw[[i]]),
       type = "surface", colorscale = flat_scale(col[i]), showscale = FALSE, opacity = opacity,
@@ -241,7 +241,10 @@ manova_plot3d <- function(data, x = "x", z = "z", group = "group",
   )
 
   fig <- plotly::layout(fig,
-    title = list(text = paste0("MANOVA 3D: ", paste(groups, collapse = " / "))),
+    title = list(text = paste0("MANOVA 3D: ", paste(groups, collapse = " / ")),
+                 x = 1, xanchor = "right", y = 0.98, yanchor = "top"),
+    margin = list(t = 120),
+    legend = list(x = 1.02, y = 0.5),
     scene = list(
       domain = list(x = c(0, 1), y = c(0, 1)),
       xaxis = list(title = list(text = x)),
