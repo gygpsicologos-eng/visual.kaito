@@ -260,7 +260,7 @@ ttest_plot3d <- function(data, x = "x", z = "z", group = "group",
     updatemenus = list(
       list(
         type = "dropdown", direction = "down", showactive = TRUE,
-        x = 0, y = 1.22, xanchor = "left", yanchor = "top",
+        x = 0, y = 1.15, xanchor = "left", yanchor = "top",
         pad = list(t = 0, b = 0, l = 1, r = 1),
         buttons = list(
           list(method = "update", label = "Vista: 3D",
@@ -275,7 +275,7 @@ ttest_plot3d <- function(data, x = "x", z = "z", group = "group",
       ),
       list(
         type = "dropdown", direction = "down", showactive = TRUE,
-        x = 0, y = 1.15, xanchor = "left", yanchor = "top",
+        x = 0, y = 1.115, xanchor = "left", yanchor = "top",
         pad = list(t = 0, b = 0, l = 1, r = 1),
         buttons = list(
           list(method = "relayout", label = "Reportar: todas",
