@@ -121,3 +121,81 @@ test_that("irt_plot3d() accepts a custom item color vector", {
   first_i1_line <- Find(function(tr) isTRUE(tr$name == "i1") && tr$type == "scatter3d", pb$x$data)
   expect_equal(first_i1_line$line$color, "#111111")
 })
+
+test_that("irt_plot3d() validates the new view/lang/hist_shift arguments", {
+  df <- make_irt_data()
+  expect_error(irt_plot3d(df, view = "4d"))
+  expect_error(irt_plot3d(df, lang = "fr"))
+  expect_error(irt_plot3d(df, hist_shift = -0.1))
+  expect_error(irt_plot3d(df, hist_shift = 1.1))
+})
+
+test_that("irt_plot3d()'s view argument sets the initial camera projection", {
+  df <- make_irt_data()
+  fig_3d <- irt_plot3d(df, view = "3d")
+  fig_2d <- irt_plot3d(df, view = "2d")
+  proj_3d <- plotly::plotly_build(fig_3d)$x$layout$scene$camera$projection$type
+  proj_2d <- plotly::plotly_build(fig_2d)$x$layout$scene$camera$projection$type
+  expect_equal(proj_3d, "perspective")
+  expect_equal(proj_2d, "orthographic")
+})
+
+test_that("irt_plot3d()'s 3D/2D buttons restyle the camera via flat leaf-level keys", {
+  # un objeto anidado en "scene.camera" deja la camara en un estado degenerado
+  # al hacer clic (verificado visualmente) -- los botones deben usar claves
+  # punteadas de hoja como "scene.camera.eye.x", nunca un objeto anidado.
+  df <- make_irt_data()
+  fig <- irt_plot3d(df)
+  btns <- plotly::plotly_build(fig)$x$layout$updatemenus[[1]]$buttons
+  for (btn in btns) {
+    arg_names <- names(btn$args[[1]])
+    expect_true(all(grepl("^scene\\.camera\\.", arg_names)))
+    expect_false("scene.camera" %in% arg_names)
+  }
+})
+
+test_that("irt_plot3d()'s hist_shift argument sets the initial histogram-panel position", {
+  df <- make_irt_data()
+  fig_front <- irt_plot3d(df, hist_shift = 1)
+  fig_back <- irt_plot3d(df, hist_shift = 0)
+  bar_y_front <- Find(function(tr) tr$type == "mesh3d", plotly::plotly_build(fig_front)$x$data)$y
+  bar_y_back <- Find(function(tr) tr$type == "mesh3d", plotly::plotly_build(fig_back)$x$data)$y
+  y0_front <- mean(range(bar_y_front))
+  y0_back <- mean(range(bar_y_back))
+  expect_equal(y0_front, 0.30, tolerance = 1e-6)
+  expect_gt(y0_back, y0_front) # el reposo (0%) queda hacia el fondo, lejos de las curvas
+})
+
+test_that("irt_plot3d()'s histogram-shift slider targets subject bars, item bars, connectors and the reference line", {
+  df <- make_irt_data()
+  fig <- irt_plot3d(df)
+  st <- attr(fig, "stats")
+  pb <- plotly::plotly_build(fig)
+  sl <- pb$x$layout$sliders[[2]]
+  expect_equal(sl$currentvalue$prefix, "Desplazamiento del histograma: ")
+  n_targets <- length(sl$steps[[1]]$args[[2]])
+  types <- vapply(pb$x$data, function(tr) tr$type, character(1))
+  n_mesh3d <- sum(types == "mesh3d") # sujetos + items
+  n_curves <- nrow(st$curves)
+  expect_equal(n_targets, n_mesh3d + n_curves + 1L) # + conectores + linea de referencia
+  expect_equal(length(sl$steps), 5L)
+})
+
+test_that("irt_plot3d() lang = 'en' translates the plot text and messages", {
+  df <- make_irt_data()
+  fig <- irt_plot3d(df, lang = "en")
+  pb <- plotly::plotly_build(fig)
+  expect_match(pb$x$layout$title$text, "^IRT map")
+  expect_equal(pb$x$layout$scene$xaxis$title$text, "Shared trait level (theta)")
+  expect_equal(pb$x$layout$sliders[[1]]$currentvalue$prefix, "Opacity: ")
+  expect_error(irt_plot3d(df, items = c("i1", "i2"), lang = "en"), "at least 3 items")
+})
+
+test_that("irt_plot3d() groups each curve's checkboxes by item and response option", {
+  df <- make_irt_data()
+  fig <- irt_plot3d(df)
+  st <- attr(fig, "stats")
+  # L1 tiene 4 categorias -> 3 umbrales -> 3 columnas (opciones) para esa fila
+  expect_equal(sum(st$curves$item == "L1"), 3)
+  expect_equal(sum(st$curves$item == "i1"), 1)
+})

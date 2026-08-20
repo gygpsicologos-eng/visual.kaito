@@ -11,6 +11,9 @@ irt_plot3d(
   theta_method = c("EAP", "MAP", "WLE", "ML"),
   opacity = 0.85,
   bin_width = 0.5,
+  hist_shift = 1,
+  view = c("3d", "2d"),
+  lang = c("es", "en"),
   col_subj = "#eda100",
   col_items = NULL
 )
@@ -40,6 +43,18 @@ histogram bars (also a live slider). Default 0.85.}
 \item{bin_width}{Width of the shared theta bins used for both
 histograms. Default 0.5.}
 
+\item{hist_shift}{Numeric in [0, 1]. Initial position of the
+double-histogram panel along the item-depth axis (also a live
+slider): 1 (default) is fully inserted at the front; 0 rests it
+against the back wall, out of the way of the curves.}
+
+\item{view}{Initial camera: \code{"3d"} (default) or \code{"2d"} (flattened
+orthographic view; also switchable live via the "3D"/"2D" buttons).}
+
+\item{lang}{Language for all plot text (title, axis/legend labels,
+hover text, on-plot annotation) and for this function's own
+messages/errors: \code{"es"} (default) or \code{"en"}.}
+
 \item{col_subj}{Color for the subject (ability) histogram. Default
 \code{"#eda100"}.}
 
@@ -63,23 +78,27 @@ curve(s) as a 3D "cordillera": \code{x} is the shared trait scale (theta),
 \code{y} separates items (one depth slot per item, ordered by difficulty),
 \code{z} is the probability of endorsing that response level or higher. A
 polytomous item with k response categories contributes k-1 boundary
-curves (one per threshold between consecutive categories), each with its
-own legend entry that can be toggled on/off independently by clicking it
-(or double-clicked to isolate it) -- there is no separate "azar"
-(guessing) parameter for these, since it does not exist in the graded
-model.
+curves (one per threshold between consecutive categories). Every curve
+has its own legend entry (click to toggle, double-click to isolate) and
+its own checkbox in an items-by-response-options matrix placed above the
+plot, so a curve can also be toggled by row/column instead of hunting
+through the legend -- there is no separate "azar" (guessing) parameter
+for polytomous thresholds, since it does not exist in the graded model.
 }
 \details{
-A flat panel is inserted at the front of the scene, sharing the same
-\code{x} (theta) axis as the curves and the same "0" point as \code{z = 0}
-(probability 0): a histogram of the sample's estimated ability (theta,
-from \code{\link[mirt:fscores]{mirt::fscores()}}) grows upward from that shared line, and directly
+A flat panel is inserted into the scene, sharing the same \code{x} (theta)
+axis as the curves and the same "0" point as \code{z = 0} (probability 0): a
+histogram of the sample's estimated ability (theta, from
+\code{\link[mirt:fscores]{mirt::fscores()}}) grows upward from that shared line, and directly
 below it a histogram of item/threshold difficulty grows downward from
 the same line, each item/threshold "hanging" from theta = 0 and stacking
 with others that fall in the same theta bin. A thin line connects each
 curve's own P = 0.5 crossing point (\code{theta_50}) to where it lands in
 that difficulty histogram -- for a 3PL item with guessing, \code{theta_50}
-is NOT the raw difficulty parameter \code{b} (see Details).
+is NOT the raw difficulty parameter \code{b} (see Details). A second slider
+slides this whole panel along the item-depth axis, from tucked against
+the back wall (its "resting" position, out of the way) to fully
+inserted at the front of the scene (the default).
 
 For a dichotomous 3-parameter item, \code{P(theta) = c + (1-c) / (1 + exp(-a*(theta-b)))}, and solving \code{P(theta) = 0.5} gives
 \code{theta_50 = b - (1/a) * log(0.5 / (0.5 - c))}, which equals \code{b} only when
@@ -87,6 +106,12 @@ For a dichotomous 3-parameter item, \code{P(theta) = c + (1-c) / (1 + exp(-a*(th
 both use this real crossing point, not \code{b} directly. For a polytomous
 (graded) threshold, the boundary curve \code{P(X >= k | theta) = 1 / (1 + exp(-a*(theta-b_k)))} has no guessing term, so its crossing point is
 \code{b_k} itself.
+
+A "3D / 2D" button pair switches the camera between the default
+perspective view and a flattened, straight-on orthographic view (looking
+along the item-depth axis), so every curve reads on the same (theta,
+P) plane, like a classic 2D item-characteristic-curve plot -- no data
+changes, only the camera.
 }
 \examples{
 set.seed(1)
