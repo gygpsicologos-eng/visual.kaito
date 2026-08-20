@@ -14,6 +14,7 @@ BugReports: https://github.com/gygpsicologos-eng/visual.kaito/issues
 Suggests: 
     htmlwidgets,
     knitr,
+    mirt,
     multcomp,
     plotly,
     rmarkdown,
