@@ -36,6 +36,13 @@ overlap between groups tied to the same statistics being reported (t-tests,
 Hotelling's T-squared, one-way MANOVA, and four post-hoc procedures), rather
 than as a separate, disconnected chart.
 
+Beyond continuous group comparisons, the same idea -- draw the statistic's
+own geometry in 3D, with the numeric result attached to the plot rather than
+reported separately -- extends to other common analyses covered by the
+package: association between two categorical variables (`chisq_plot3d()`),
+repeated-measures/pre-post designs (`paired_plot3d()`), and Item Response
+Theory item calibration (`irt_plot3d()`).
+
 ## Comparison with existing tools
 
 Several excellent R packages already combine plots with statistical results
@@ -129,6 +136,104 @@ installed, `manova_plot3d()` still draws the full plot with the other three
 post-hoc methods; the Dunnett option shows an explanatory note instead of a
 fabricated result.
 
+## Association between two categorical variables: `chisq_plot3d()`
+
+`chisq_plot3d()` builds a contingency table from two categorical variables
+(each of which can combine several columns, e.g. `col = c("sexo",
+"compra")`) and draws one 3D bar per cell whose height and color encode the
+cell's standardized (Pearson) residual -- how far the observed count is
+from what independence would predict. Two translucent reference planes mark
+the conventional p < .05 / p < .01 thresholds, and two diagnostics are
+computed and summarized on the plot automatically: a low-frequency warning
+(Cochran's rule) and, when one side of the table is subdivided, a
+Simpson's-paradox check (a descriptive sign-reversal flag plus a formal
+Gail & Simon qualitative-interaction test per cell).
+
+```{r chisq-example}
+set.seed(1)
+df4 <- data.frame(
+  tipo = sample(c("A", "B", "C"), 300, replace = TRUE, prob = c(0.4, 0.35, 0.25)),
+  sexo = sample(c("Varon", "Mujer"), 300, replace = TRUE),
+  compra = sample(c("Si", "No"), 300, replace = TRUE)
+)
+
+fig4 <- chisq_plot3d(df4, row = "tipo", col = c("sexo", "compra"), lang = "en")
+fig4
+```
+
+The "3D / 2D" buttons flatten the camera to a straight-down orthographic
+view, turning the bars into a plain 2D heatmap grid -- useful once you just
+want to read off which cells are over/under-represented. `lang = "en"`
+(shown above) or the default `lang = "es"` translate every label, hover
+string, and on-plot message; both are equally supported.
+
+## Repeated measures on two variables: `paired_plot3d()`
+
+`paired_plot3d()` is the repeated-measures counterpart to `ttest_plot3d()`:
+instead of two independent groups, the same subjects are measured twice
+(e.g. before and after an intervention) on two continuous variables. Each
+subject is drawn as a "Pre" point and a "Post" point joined by a line in a
+3D scene where `x` and `z` are the two variables and the third axis
+separates the two measurement occasions. Both paired Student's t-tests (one
+per variable) and a joint paired Hotelling's T-squared test on the vector
+of differences are reported.
+
+```{r paired-example}
+set.seed(1)
+n <- 20
+df5 <- data.frame(x_pre = rnorm(n, 60, 9), z_pre = rnorm(n, 18, 4))
+df5$x_post <- df5$x_pre - rnorm(n, 9, 6)
+df5$z_post <- df5$z_pre - rnorm(n, 6, 4)
+
+fig5 <- paired_plot3d(df5, x_pre = "x_pre", x_post = "x_post",
+                       z_pre = "z_pre", z_post = "z_post")
+fig5
+```
+
+Lines are colored by "direction of change" (both variables increase, both
+decrease, or a mixed change) by default, which is often the fastest way to
+spot whether an intervention moved everyone the same way.
+
+## Item Response Theory: `irt_plot3d()`
+
+`irt_plot3d()` fits an IRT model with `mirt` -- dichotomous items as
+1PL/2PL/3PL, polytomous (Likert-type) items as the Graded Response Model --
+and draws every item's characteristic curve(s) as a 3D "cordillera": `x` is
+the shared ability scale (theta), `y` separates items (ordered by
+difficulty), and `z` is the probability of endorsing that response level or
+higher. A polytomous item contributes one boundary curve per threshold, all
+individually selectable. A flat panel shares the same theta axis and the
+same "0" point (probability 0) as the curves: a histogram of the sample's
+estimated ability grows upward from that line, and a histogram of
+item/threshold difficulty grows downward from it, with a thin connector line
+from each curve's true P = 0.5 crossing point to where it lands in that
+difficulty histogram.
+
+```{r irt-example}
+set.seed(1)
+n <- 200
+theta <- rnorm(n)
+logistic <- function(x) 1 / (1 + exp(-x))
+df6 <- data.frame(
+  i1 = rbinom(n, 1, logistic(1.2 * (theta - (-0.5)))),
+  i2 = rbinom(n, 1, logistic(1.4 * (theta - 0.3))),
+  i3 = rbinom(n, 1, logistic(0.9 * (theta - 0.8)))
+)
+
+if (requireNamespace("mirt", quietly = TRUE)) {
+  fig6 <- irt_plot3d(df6, items = c("i1", "i2", "i3"), lang = "en")
+  fig6
+}
+```
+
+Live controls include an opacity slider, a histogram-shift slider that
+slides the ability/difficulty panel along the item-depth axis (from tucked
+against the back wall to fully inserted at the front), "3D / 2D" buttons
+for a flattened orthographic view where every curve reads on the same
+(theta, P) plane, and a checkbox matrix (rows = items, columns = response
+options) above the plot for toggling individual curves without hunting
+through the legend.
+
 ## Triaxial box plots: `boxplot3d_interactive()`
 
 For a more traditional (but still 3D and interactive) summary of three
@@ -154,7 +259,25 @@ of axes, between whisker conventions, between raw and standardized scales,
 and recolor the raw points by any grouping/categorical column in the data.
 `boxplot3d_significance()` runs the matching statistical tests (per-axis
 and joint, both parametric and non-parametric) without producing a plot,
-for when only the numbers are needed.
+for when only the numbers are needed. `boxplot3d()` is the lighter,
+base-graphics predecessor: the same four whisker conventions, drawn as
+three linked 2D projections instead of a single rotatable scene, for when
+a static figure is all that is needed (e.g. for a printed report).
+
+## A didactic 2D plot: `ttest_plot()`
+
+For teaching or reporting a single t-test outside of the 3D/joint context
+above, `ttest_plot()` draws the t-distribution density curve for the
+relevant degrees of freedom, shades the critical (rejection) region
+according to `alternative` and `conf.level`, and marks the observed
+t-statistic with a vertical line -- so it is visually obvious whether the
+result falls inside the rejection region. It accepts either raw data
+(`x`, optionally `y`, exactly as `stats::t.test()` would) or a manual
+`t`/`df` pair, for illustrating a scenario without needing raw data at all.
+
+```{r ttest2d-example}
+ttest_plot(t = 2.4, df = 28, alternative = "greater")
+```
 
 ## A note on interactivity
 

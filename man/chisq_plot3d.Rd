@@ -4,7 +4,15 @@
 \alias{chisq_plot3d}
 \title{Draw a chi-square association plot (standardized residuals per cell)}
 \usage{
-chisq_plot3d(data, row, col, opacity = 0.85, sep = " - ")
+chisq_plot3d(
+  data,
+  row,
+  col,
+  opacity = 0.85,
+  sep = " - ",
+  view = c("3d", "2d"),
+  lang = c("es", "en")
+)
 }
 \arguments{
 \item{data}{A data frame.}
@@ -20,6 +28,14 @@ slider). Default 0.85.}
 
 \item{sep}{Character used to join combined-column level labels.
 Default \code{" - "}.}
+
+\item{view}{Initial camera: \code{"3d"} (default) or \code{"2d"} (flattened
+top-down orthographic view; also switchable live via the "3D"/"2D"
+buttons).}
+
+\item{lang}{Language for all plot text (title, axis/legend labels,
+hover text, on-plot annotation) and for this function's own
+messages/errors: \code{"es"} (default) or \code{"en"}.}
 }
 \value{
 A \code{plotly} htmlwidget object. The full numeric results (the
@@ -60,6 +76,11 @@ collapsed table, treating each stratum's standardized residual as an
 approximately N(0,1) effect estimate and testing whether its sign is
 consistent across strata.
 }
+
+A "3D / 2D" button pair switches the camera between the default
+perspective view and a flattened, straight-down orthographic view (looking
+along the z axis), so the bars read as a plain 2D heatmap grid -- no data
+changes, only the camera.
 }
 \examples{
 set.seed(1)

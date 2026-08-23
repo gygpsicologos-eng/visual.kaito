@@ -31,6 +31,11 @@
 #'     consistent across strata.
 #' }
 #'
+#' A "3D / 2D" button pair switches the camera between the default
+#' perspective view and a flattened, straight-down orthographic view (looking
+#' along the z axis), so the bars read as a plain 2D heatmap grid -- no data
+#' changes, only the camera.
+#'
 #' @param data A data frame.
 #' @param row,col Character vector(s) of column name(s) in `data`. Length 1
 #'   for a simple two-way table; length > 1 to combine several categorical
@@ -41,6 +46,12 @@
 #'   slider). Default 0.85.
 #' @param sep Character used to join combined-column level labels.
 #'   Default `" - "`.
+#' @param view Initial camera: `"3d"` (default) or `"2d"` (flattened
+#'   top-down orthographic view; also switchable live via the "3D"/"2D"
+#'   buttons).
+#' @param lang Language for all plot text (title, axis/legend labels,
+#'   hover text, on-plot annotation) and for this function's own
+#'   messages/errors: `"es"` (default) or `"en"`.
 #'
 #' @return A `plotly` htmlwidget object. The full numeric results (the
 #'   contingency table, the `chisq.test()` object, expected counts,
@@ -60,28 +71,29 @@
 #' }
 #'
 #' @export
-chisq_plot3d <- function(data, row, col, opacity = 0.85, sep = " - ") {
+chisq_plot3d <- function(data, row, col, opacity = 0.85, sep = " - ",
+                          view = c("3d", "2d"), lang = c("es", "en")) {
+  view <- match.arg(view)
+  lang <- match.arg(lang)
+  L <- .chisq_i18n(lang)
   if (!requireNamespace("plotly", quietly = TRUE)) {
-    stop("El paquete 'plotly' es necesario para chisq_plot3d(). ",
-         "Instalalo con install.packages('plotly').")
+    stop(L$err_need_plotly)
   }
   if (!requireNamespace("htmlwidgets", quietly = TRUE)) {
-    stop("El paquete 'htmlwidgets' es necesario para chisq_plot3d(). ",
-         "Instalalo con install.packages('htmlwidgets').")
+    stop(L$err_need_htmlwidgets)
   }
   stopifnot(opacity > 0, opacity <= 1)
-  if (!all(row %in% names(data))) stop("'row' contiene columnas que no existen en 'data'.")
-  if (!all(col %in% names(data))) stop("'col' contiene columnas que no existen en 'data'.")
+  if (!all(row %in% names(data))) stop(L$err_row_missing)
+  if (!all(col %in% names(data))) stop(L$err_col_missing)
   if (length(row) > 1 && length(col) > 1) {
-    message("Tanto 'row' como 'col' tienen varias columnas: el diagnostico de la ",
-            "paradoja de Simpson solo se calcula para la subdivision en 'col'.")
+    message(L$msg_both_subdivided)
   }
 
   row_factor <- .combine_factor(data, row, sep = sep)
   col_factor <- .combine_factor(data, col, sep = sep)
   ok <- stats::complete.cases(data.frame(row_factor, col_factor))
   if (any(!ok)) {
-    message("Se excluyeron ", sum(!ok), " fila(s) con datos faltantes en las columnas de agrupacion.")
+    message(sprintf(L$msg_excluded, sum(!ok)))
     row_factor <- droplevels(row_factor[ok]); col_factor <- droplevels(col_factor[ok])
   }
 
@@ -93,15 +105,9 @@ chisq_plot3d <- function(data, row, col, opacity = 0.85, sep = " - ") {
   n_below1 <- sum(expected < 1)
   frac_below5 <- mean(expected < 5)
   cochran_note <- if (n_below1 > 0) {
-    sprintf(
-      "Aviso (regla de Cochran): %d casilla(s) con frecuencia esperada < 1. El chi-cuadrado no es fiable aqui; considera el test exacto de Fisher o agrupar categorias.",
-      n_below1
-    )
+    sprintf(L$cochran_below1, n_below1)
   } else if (frac_below5 > 0.2) {
-    sprintf(
-      "Aviso (regla de Cochran): %.0f%% de las casillas tienen frecuencia esperada < 5 (> 20%%). Considera el test exacto de Fisher o agrupar categorias.",
-      100 * frac_below5
-    )
+    sprintf(L$cochran_below5, 100 * frac_below5)
   } else {
     NULL
   }
@@ -119,8 +125,7 @@ chisq_plot3d <- function(data, row, col, opacity = 0.85, sep = " - ") {
   for (i in seq_len(nr)) {
     for (j in seq_len(nc)) {
       z <- stdres[i, j]
-      hover[i, j] <- sprintf(
-        "%s / %s<br>Observado = %d<br>Esperado = %.1f<br>Residuo estandarizado = %.2f",
+      hover[i, j] <- sprintf(L$hover_cell,
         row_labels[i], col_labels[j], tab[i, j], expected[i, j], z
       )
       lo <- min(0, z); hi <- max(0, z)
@@ -152,16 +157,32 @@ chisq_plot3d <- function(data, row, col, opacity = 0.85, sep = " - ") {
   plane(2.58, 0.12)
 
   txt <- paste(
-    sprintf("Chi-cuadrado: X2(%d) = %.3f, p = %.4g", chi$parameter, chi$statistic, chi$p.value),
-    sprintf("n = %d  |  filas: %s  |  columnas: %s", sum(tab), paste(row, collapse = "+"), paste(col, collapse = "+")),
-    if (!is.null(cochran_note)) cochran_note else "Frecuencias esperadas: sin problemas (regla de Cochran).",
-    if (!is.null(simpson) && simpson$applicable) .simpson_summary_text(simpson) else "Paradoja de Simpson: no aplica (ni 'row' ni 'col' tienen subdivision).",
+    sprintf(L$chisq_line, chi$parameter, chi$statistic, chi$p.value),
+    sprintf(L$n_line, sum(tab), paste(row, collapse = "+"), paste(col, collapse = "+")),
+    if (!is.null(cochran_note)) cochran_note else L$cochran_ok,
+    if (!is.null(simpson) && simpson$applicable) .simpson_summary_text(simpson, L) else L$simpson_na,
     sep = "<br>"
   )
 
+  camera_3d <- list(eye = list(x = 1.6, y = -1.6, z = 0.9), up = list(x = 0, y = 0, z = 1),
+                     projection = list(type = "perspective"))
+  camera_2d <- list(eye = list(x = 0, y = 0, z = 2.5), up = list(x = 0, y = 1, z = 0),
+                     projection = list(type = "orthographic"))
+  # los botones 3D/2D usan claves punteadas de hoja (p.ej. "scene.camera.eye.x")
+  # en vez de un objeto anidado en "scene.camera": un objeto anidado deja la
+  # camara en un estado degenerado al hacer clic (mismo hallazgo que en
+  # irt_plot3d()).
+  .cam_flat <- function(cam) {
+    stats::setNames(
+      list(cam$eye$x, cam$eye$y, cam$eye$z, cam$up$x, cam$up$y, cam$up$z, cam$projection$type),
+      c("scene.camera.eye.x", "scene.camera.eye.y", "scene.camera.eye.z",
+        "scene.camera.up.x", "scene.camera.up.y", "scene.camera.up.z",
+        "scene.camera.projection.type")
+    )
+  }
+
   fig <- plotly::layout(fig,
-    title = list(text = "Chi-cuadrado: residuos estandarizados por casilla",
-                 x = 1, xanchor = "right", y = 0.98, yanchor = "top"),
+    title = list(text = L$title, x = 1, xanchor = "right", y = 0.98, yanchor = "top"),
     margin = list(t = 120),
     scene = list(
       domain = list(x = c(0, 1), y = c(0, 1)),
@@ -169,17 +190,27 @@ chisq_plot3d <- function(data, row, col, opacity = 0.85, sep = " - ") {
                    tickvals = seq_len(nc), ticktext = col_labels),
       yaxis = list(title = list(text = paste(row, collapse = " x ")),
                    tickvals = seq_len(nr), ticktext = row_labels),
-      zaxis = list(title = list(text = "Residuo estandarizado")),
-      camera = list(eye = list(x = 1.6, y = -1.6, z = 0.9))
+      zaxis = list(title = list(text = L$zaxis_title)),
+      camera = if (view == "2d") camera_2d else camera_3d
     ),
     annotations = list(list(
       text = txt, xref = "paper", yref = "paper", x = 0.01, y = 0.98, xanchor = "left", yanchor = "top",
       showarrow = FALSE, align = "left", bordercolor = "#e1e0d9", borderwidth = 1,
       borderpad = 6, bgcolor = "#fcfcfb", font = list(size = 11, color = "#0b0b0b")
     )),
+    updatemenus = list(list(
+      type = "buttons", direction = "right", showactive = TRUE,
+      active = if (view == "2d") 1L else 0L,
+      x = 0, y = 1.10, xanchor = "left", yanchor = "top",
+      pad = list(t = 0, b = 0, l = 1, r = 1),
+      buttons = list(
+        list(method = "relayout", label = "3D", args = list(.cam_flat(camera_3d))),
+        list(method = "relayout", label = "2D", args = list(.cam_flat(camera_2d)))
+      )
+    )),
     sliders = list(list(
       active = which.min(abs(c(0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95) - opacity)) - 1L,
-      currentvalue = list(prefix = "Transparencia: "),
+      currentvalue = list(prefix = L$opacity_prefix),
       x = 0, len = 0.32, xanchor = "left", y = -0.02, yanchor = "top",
       pad = list(t = 10),
       steps = lapply(c(0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95), function(v) list(
@@ -310,18 +341,70 @@ chisq_plot3d <- function(data, row, col, opacity = 0.85, sep = " - ") {
 }
 
 #' @noRd
-.simpson_summary_text <- function(simpson) {
+.simpson_summary_text <- function(simpson, L) {
   n_flag <- nrow(simpson$descriptive_flags)
   n_sig <- sum(simpson$gail_simon$p.value < 0.05, na.rm = TRUE)
   desc <- if (n_flag > 0) {
-    sprintf("Paradoja de Simpson (descriptivo): %d casilla(s) cambian de signo al comparar la tabla colapsada con al menos un nivel de '%s'.", n_flag, simpson$sub_var)
+    sprintf(L$simpson_desc_flag, n_flag, simpson$sub_var)
   } else {
-    sprintf("Paradoja de Simpson (descriptivo): sin cambios de signo al subdividir por '%s'.", simpson$sub_var)
+    sprintf(L$simpson_desc_ok, simpson$sub_var)
   }
   formal <- if (n_sig > 0) {
-    sprintf("Test formal (Gail-Simon): %d casilla(s) con interaccion cualitativa significativa (p < .05).", n_sig)
+    sprintf(L$simpson_formal_flag, n_sig)
   } else {
-    "Test formal (Gail-Simon): sin interaccion cualitativa significativa (p < .05) en ninguna casilla."
+    L$simpson_formal_ok
   }
   paste(desc, formal, sep = "<br>")
+}
+
+#' Text strings used by chisq_plot3d(), in Spanish or English
+#' @noRd
+.chisq_i18n <- function(lang) {
+  if (lang == "en") {
+    list(
+      title = "Chi-square: standardized residuals per cell",
+      zaxis_title = "Standardized residual",
+      hover_cell = "%s / %s<br>Observed = %d<br>Expected = %.1f<br>Standardized residual = %.2f",
+      opacity_prefix = "Opacity: ",
+      chisq_line = "Chi-square: X2(%d) = %.3f, p = %.4g",
+      n_line = "n = %d  |  rows: %s  |  columns: %s",
+      cochran_below1 = "Warning (Cochran's rule): %d cell(s) with expected count < 1. The chi-square approximation is unreliable here; consider Fisher's exact test or collapsing categories.",
+      cochran_below5 = "Warning (Cochran's rule): %.0f%% of cells have an expected count < 5 (> 20%%). Consider Fisher's exact test or collapsing categories.",
+      cochran_ok = "Expected frequencies: no issues (Cochran's rule).",
+      simpson_na = "Simpson's paradox: not applicable (neither 'row' nor 'col' has a subdivision).",
+      simpson_desc_flag = "Simpson's paradox (descriptive): %d cell(s) change sign when comparing the collapsed table against at least one level of '%s'.",
+      simpson_desc_ok = "Simpson's paradox (descriptive): no sign changes when subdividing by '%s'.",
+      simpson_formal_flag = "Formal test (Gail-Simon): %d cell(s) with a significant qualitative interaction (p < .05).",
+      simpson_formal_ok = "Formal test (Gail-Simon): no significant qualitative interaction (p < .05) in any cell.",
+      err_need_plotly = "The 'plotly' package is required for chisq_plot3d(). Install it with install.packages('plotly').",
+      err_need_htmlwidgets = "The 'htmlwidgets' package is required for chisq_plot3d(). Install it with install.packages('htmlwidgets').",
+      err_row_missing = "'row' contains columns that do not exist in 'data'.",
+      err_col_missing = "'col' contains columns that do not exist in 'data'.",
+      msg_both_subdivided = "Both 'row' and 'col' have several columns: the Simpson's-paradox diagnostic is only computed for the subdivision in 'col'.",
+      msg_excluded = "Excluded %d row(s) with missing data in the grouping columns."
+    )
+  } else {
+    list(
+      title = "Chi-cuadrado: residuos estandarizados por casilla",
+      zaxis_title = "Residuo estandarizado",
+      hover_cell = "%s / %s<br>Observado = %d<br>Esperado = %.1f<br>Residuo estandarizado = %.2f",
+      opacity_prefix = "Transparencia: ",
+      chisq_line = "Chi-cuadrado: X2(%d) = %.3f, p = %.4g",
+      n_line = "n = %d  |  filas: %s  |  columnas: %s",
+      cochran_below1 = "Aviso (regla de Cochran): %d casilla(s) con frecuencia esperada < 1. El chi-cuadrado no es fiable aqui; considera el test exacto de Fisher o agrupar categorias.",
+      cochran_below5 = "Aviso (regla de Cochran): %.0f%% de las casillas tienen frecuencia esperada < 5 (> 20%%). Considera el test exacto de Fisher o agrupar categorias.",
+      cochran_ok = "Frecuencias esperadas: sin problemas (regla de Cochran).",
+      simpson_na = "Paradoja de Simpson: no aplica (ni 'row' ni 'col' tienen subdivision).",
+      simpson_desc_flag = "Paradoja de Simpson (descriptivo): %d casilla(s) cambian de signo al comparar la tabla colapsada con al menos un nivel de '%s'.",
+      simpson_desc_ok = "Paradoja de Simpson (descriptivo): sin cambios de signo al subdividir por '%s'.",
+      simpson_formal_flag = "Test formal (Gail-Simon): %d casilla(s) con interaccion cualitativa significativa (p < .05).",
+      simpson_formal_ok = "Test formal (Gail-Simon): sin interaccion cualitativa significativa (p < .05) en ninguna casilla.",
+      err_need_plotly = "El paquete 'plotly' es necesario para chisq_plot3d(). Instalalo con install.packages('plotly').",
+      err_need_htmlwidgets = "El paquete 'htmlwidgets' es necesario para chisq_plot3d(). Instalalo con install.packages('htmlwidgets').",
+      err_row_missing = "'row' contiene columnas que no existen en 'data'.",
+      err_col_missing = "'col' contiene columnas que no existen en 'data'.",
+      msg_both_subdivided = "Tanto 'row' como 'col' tienen varias columnas: el diagnostico de la paradoja de Simpson solo se calcula para la subdivision en 'col'.",
+      msg_excluded = "Se excluyeron %d fila(s) con datos faltantes en las columnas de agrupacion."
+    )
+  }
 }

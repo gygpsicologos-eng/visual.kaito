@@ -133,3 +133,43 @@ test_that(".diverging_color() returns the extreme colors at +/- the clamp limit 
   expect_equal(visual.kaito:::.diverging_color(10), visual.kaito:::.diverging_color(3))
   expect_equal(visual.kaito:::.diverging_color(-10), visual.kaito:::.diverging_color(-3))
 })
+
+test_that("chisq_plot3d() validates the view/lang arguments", {
+  df <- make_simple_chi_data()
+  expect_error(chisq_plot3d(df, row = "tipo", col = "sexo", view = "4d"))
+  expect_error(chisq_plot3d(df, row = "tipo", col = "sexo", lang = "fr"))
+})
+
+test_that("chisq_plot3d()'s view argument sets the initial camera projection", {
+  df <- make_simple_chi_data()
+  fig_3d <- chisq_plot3d(df, row = "tipo", col = "sexo", view = "3d")
+  fig_2d <- chisq_plot3d(df, row = "tipo", col = "sexo", view = "2d")
+  proj_3d <- plotly::plotly_build(fig_3d)$x$layout$scene$camera$projection$type
+  proj_2d <- plotly::plotly_build(fig_2d)$x$layout$scene$camera$projection$type
+  expect_equal(proj_3d, "perspective")
+  expect_equal(proj_2d, "orthographic")
+})
+
+test_that("chisq_plot3d()'s 3D/2D buttons restyle the camera via flat leaf-level keys", {
+  # un objeto anidado en "scene.camera" deja la camara en un estado
+  # degenerado al hacer clic (mismo hallazgo que en irt_plot3d()) -- los
+  # botones deben usar claves punteadas de hoja, nunca un objeto anidado.
+  df <- make_simple_chi_data()
+  fig <- chisq_plot3d(df, row = "tipo", col = "sexo")
+  btns <- plotly::plotly_build(fig)$x$layout$updatemenus[[1]]$buttons
+  for (btn in btns) {
+    arg_names <- names(btn$args[[1]])
+    expect_true(all(grepl("^scene\\.camera\\.", arg_names)))
+    expect_false("scene.camera" %in% arg_names)
+  }
+})
+
+test_that("chisq_plot3d() lang = 'en' translates the plot text and messages", {
+  df <- make_simple_chi_data()
+  fig <- chisq_plot3d(df, row = "tipo", col = "sexo", lang = "en")
+  pb <- plotly::plotly_build(fig)
+  expect_match(pb$x$layout$title$text, "^Chi-square")
+  expect_equal(pb$x$layout$scene$zaxis$title$text, "Standardized residual")
+  expect_equal(pb$x$layout$sliders[[1]]$currentvalue$prefix, "Opacity: ")
+  expect_error(chisq_plot3d(df, row = "no_existe", col = "sexo", lang = "en"), "do not exist")
+})
