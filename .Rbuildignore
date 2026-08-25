@@ -1,6 +1,6 @@
 ^visual\.kaito\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
-^visual\.kaito_0\.0\.0\.9000\.pdf$
+^visual\.kaito_.*\.pdf$
 ^\.github$
 ^CITATION\.cff$
