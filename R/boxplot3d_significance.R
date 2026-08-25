@@ -13,6 +13,10 @@
 #' sum-of-squares decomposition, computed without depending on 'vegan')
 #' for the joint 3D comparison.
 #'
+#' Rows with a missing value (`NA`) on `x`, `y`, or `z` are excluded
+#' listwise before any test is run, so the per-axis tests and both joint
+#' (3D) tests are computed on the same, identical sample.
+#'
 #' @param data A data frame containing the three axes and the grouping
 #'   variable.
 #' @param x,y,z Character. Column names of the three continuous axes.
@@ -51,6 +55,19 @@ boxplot3d_significance <- function(data, x = "x", y = "y", z = "z", group = "gro
   if (k < 2) stop("Se necesitan al menos 2 grupos.")
 
   axes <- list(X = .as_plain_numeric(data[[x]]), Y = .as_plain_numeric(data[[y]]), Z = .as_plain_numeric(data[[z]]))
+
+  # Listwise-delete rows with NA on any of the three axes, so per-axis tests,
+  # MANOVA, and PERMANOVA are all computed on the same, consistent sample
+  # (stats::manova() does this automatically via its formula interface; the
+  # permutation PERMANOVA below does not handle NA on its own, so without
+  # this step it silently returns NA whenever the data contain missingness).
+  cc <- stats::complete.cases(axes$X, axes$Y, axes$Z)
+  if (!all(cc)) {
+    axes <- lapply(axes, function(v) v[cc])
+    g <- droplevels(g[cc])
+    k <- nlevels(g)
+    if (k < 2) stop("Tras excluir casos con NA en x/y/z, quedan menos de 2 grupos.")
+  }
   if (scale == 1) axes <- lapply(axes, function(v) as.numeric(scale(v)))
 
   per_axis <- lapply(names(axes), function(nm) {

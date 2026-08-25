@@ -55,6 +55,10 @@ Non-parametric: Wilcoxon rank-sum test (2 groups) / Kruskal-Wallis
 (>2 groups) per axis; a permutation-based PERMANOVA (one-way, Euclidean
 sum-of-squares decomposition, computed without depending on 'vegan')
 for the joint 3D comparison.
+
+Rows with a missing value (\code{NA}) on \code{x}, \code{y}, or \code{z} are excluded
+listwise before any test is run, so the per-axis tests and both joint
+(3D) tests are computed on the same, identical sample.
 }
 \examples{
 set.seed(1)

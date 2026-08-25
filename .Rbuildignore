@@ -4,3 +4,4 @@
 ^visual\.kaito_.*\.pdf$
 ^\.github$
 ^CITATION\.cff$
+^cran-comments\.md$
