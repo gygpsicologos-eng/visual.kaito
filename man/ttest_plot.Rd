@@ -17,7 +17,8 @@ ttest_plot(
   col_curve = "#2a78d6",
   col_critical = "#d03b3b",
   col_observed = "#0b0b0b",
-  main = NULL
+  main = NULL,
+  lang = c("es", "en")
 )
 }
 \arguments{
@@ -47,6 +48,9 @@ be supplied together.}
 the shaded critical region, and the observed-statistic marker.}
 
 \item{main}{Optional plot title.}
+
+\item{lang}{One of \code{"es"} (default) or \code{"en"}, translating the axis
+labels, legend text, and error message.}
 }
 \value{
 Invisibly, a list with \code{t}, \code{df}, \code{p.value}, \code{alternative},

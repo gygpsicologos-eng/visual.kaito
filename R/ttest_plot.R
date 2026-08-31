@@ -33,6 +33,8 @@
 #' @param col_curve,col_critical,col_observed Colors for the density curve,
 #'   the shaded critical region, and the observed-statistic marker.
 #' @param main Optional plot title.
+#' @param lang One of `"es"` (default) or `"en"`, translating the axis
+#' labels, legend text, and error message.
 #'
 #' @return Invisibly, a list with `t`, `df`, `p.value`, `alternative`,
 #'   `alpha`, `critical` (the critical value(s)), and `stars`.
@@ -52,15 +54,28 @@ ttest_plot <- function(x = NULL, y = NULL, mu = 0, paired = FALSE,
                         var.equal = FALSE, conf.level = 0.95,
                         t = NULL, df = NULL,
                         col_curve = "#2a78d6", col_critical = "#d03b3b",
-                        col_observed = "#0b0b0b", main = NULL) {
+                        col_observed = "#0b0b0b", main = NULL, lang = c("es", "en")) {
   alternative <- match.arg(alternative)
+  lang <- match.arg(lang)
+  L <- if (lang == "en") list(
+    title = "t-distribution (df = %.1f)",
+    ylab = "Density",
+    obs = "observed t = %.3f",
+    alpha = "alpha = %.3g (%s)",
+    err_need_x = "Provide 'x' (a numeric vector; optionally 'y' for a two-sample test), or 't' and 'df' directly for a manual scenario."
+  ) else list(
+    title = "Distribucion t (df = %.1f)",
+    ylab = "Densidad",
+    obs = "t observado = %.3f",
+    alpha = "alfa = %.3g (%s)",
+    err_need_x = "Proporciona 'x' (variable numerica; opcionalmente 'y' para 2 muestras), o bien 't' y 'df' directamente para un escenario manual."
+  )
   stopifnot(conf.level > 0, conf.level < 1)
   alpha <- 1 - conf.level
 
   if (is.null(t) || is.null(df)) {
     if (is.null(x)) {
-      stop("Proporciona 'x' (variable numerica; opcionalmente 'y' para 2 muestras), ",
-           "o bien 't' y 'df' directamente para un escenario manual.")
+      stop(L$err_need_x)
     }
     tt <- if (is.null(y)) {
       stats::t.test(x, mu = mu, alternative = alternative, conf.level = conf.level)
@@ -100,9 +115,9 @@ ttest_plot <- function(x = NULL, y = NULL, mu = 0, paired = FALSE,
 
   op <- graphics::par(mar = c(4.5, 4.5, 3, 1))
   on.exit(graphics::par(op))
-  plot_title <- if (is.null(main)) sprintf("Distribucion t (df = %.1f)", df) else main
+  plot_title <- if (is.null(main)) sprintf(L$title, df) else main
   graphics::plot(xs, ys, type = "l", lwd = 2, col = col_curve,
-                 xlab = "t", ylab = "Densidad", main = plot_title)
+                 xlab = "t", ylab = L$ylab, main = plot_title)
 
   if (alternative == "two.sided") {
     shade(-xr, crit[1]); shade(crit[2], xr)
@@ -119,9 +134,9 @@ ttest_plot <- function(x = NULL, y = NULL, mu = 0, paired = FALSE,
            if (p_value < 0.05) "*" else if (p_value < 0.1) "." else ""
   legend_pos <- if (t >= 0) "topleft" else "topright"
   graphics::legend(legend_pos, bty = "n", text.col = "#52514e", cex = 0.85,
-    legend = c(sprintf("t observado = %.3f", t),
+    legend = c(sprintf(L$obs, t),
                sprintf("p = %.4g %s", p_value, stars),
-               sprintf("alfa = %.3g (%s)", alpha, alternative)))
+               sprintf(L$alpha, alpha, alternative)))
 
   invisible(list(t = t, df = df, p.value = p_value, alternative = alternative,
                  alpha = alpha, critical = crit, stars = stars))
